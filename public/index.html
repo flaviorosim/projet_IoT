@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Rastreamento WiFi LoRaWAN</title>
+    <title> WiFi LoRaWAN Tracking</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -21,66 +21,67 @@
 <body>
 
     <div id="info">
-        <strong>Status:</strong> <span id="status">Aguardando...</span><br>
-        <strong>Pontos:</strong> <span id="count">0</span>
+        <strong>Status:</strong> <span id="status">Waiting...</span><br>
+        <strong>Points:</strong> <span id="count">0</span>
     </div>
     
     <div id="map"></div>
 
     <script>
-        // 1. Inicializar o Mapa
-        // Centralizado em Paris (ajuste se necessário)
+        // 1. Initialize Map
+        // Centered on Paris (adjust if necessary)
         const map = L.map('map').setView([48.8566, 2.3522], 13);
 
-        // Adicionar camada do OpenStreetMap
+        // Add OpenStreetMap layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Variáveis para guardar o desenho
+        // Variables to store the drawing
         let polyline = L.polyline([], {color: 'red', weight: 4}).addTo(map);
         let markers = L.layerGroup().addTo(map);
 
-        // Função para buscar dados do Backend
+        // Function to fetch data from Backend
         async function updateMap() {
             try {
-                const response = await fetch('/api/trajeto');
+                // Note: I updated the endpoint name in the Node.js code to '/api/trajectory'
+                const response = await fetch('/api/trajectory'); 
                 const history = await response.json();
                 
                 document.getElementById('count').innerText = history.length;
-                document.getElementById('status').innerText = "Atualizado: " + new Date().toLocaleTimeString();
+                document.getElementById('status').innerText = "Updated: " + new Date().toLocaleTimeString();
 
-                // Limpar marcadores antigos (opcional, ou manter só o último)
+                // Clear old markers (optional, or keep only the last one)
                 markers.clearLayers();
                 
-                // Criar array de coordenadas para a linha [lat, lon]
+                // Create coordinate array for the line [lat, lon]
                 const latlngs = history.map(p => [p.lat, p.lon]);
 
-                // Atualizar a linha vermelha (trajetória)
+                // Update red line (trajectory)
                 polyline.setLatLngs(latlngs);
 
-                // Se houver pontos, dar zoom na área e colocar marcador no último
+                // If points exist, zoom into area and place marker on last one
                 if (history.length > 0) {
                     const last = history[history.length - 1];
                     
-                    // Adicionar marcador na posição atual
+                    // Add marker at current position
                     L.marker([last.lat, last.lon])
                         .addTo(markers)
-                        .bindPopup(`Hora: ${new Date(last.timestamp).toLocaleTimeString()}<br>APs usados: ${last.aps_count}`)
+                        .bindPopup(`Time: ${new Date(last.timestamp).toLocaleTimeString()}<br>APs used: ${last.aps_count}`)
                         .openPopup();
                     
-                    // Centralizar mapa no último ponto (opcional)
+                    // Center map on last point (optional)
                     map.panTo([last.lat, last.lon]);
                 }
 
             } catch (error) {
-                console.error("Erro ao buscar dados:", error);
+                console.error("Error fetching data:", error);
             }
         }
 
-        // Atualizar a cada 5 segundos
+        // Update every 5 seconds
         setInterval(updateMap, 5000);
-        updateMap(); // Primeira chamada
+        updateMap(); // First call
     </script>
 </body>
 </html>

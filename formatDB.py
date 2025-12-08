@@ -1,63 +1,63 @@
 import pandas as pd
 import os
 
-# CONFIGURAÇÃO
-ARQUIVO_ENTRADA = 'dbcompl.csv'  # O arquivo com os dados que você mandou
-ARQUIVO_SAIDA = 'dbform.csv'              # O arquivo final para o Node.js
+# CONFIGURATION
+INPUT_FILE = 'dbcompl.csv'   # The file with the data you provided
+OUTPUT_FILE = 'dbform.csv'   # The final file for Node.js
 
 def main():
-    if not os.path.exists(ARQUIVO_ENTRADA):
-        print(f"❌ Erro: Salve seus dados no arquivo '{ARQUIVO_ENTRADA}' primeiro.")
+    if not os.path.exists(INPUT_FILE):
+        print(f"❌ Error: Save your data in '{INPUT_FILE}' first.")
         return
 
-    print(f"1. Lendo {ARQUIVO_ENTRADA}...")
+    print(f"1. Reading {INPUT_FILE}...")
     
-    # Lê o CSV. O formato WiGLE usa vírgula como separador padrão.
+    # Reads the CSV. WiGLE format usually uses comma as default separator.
     try:
-        df = pd.read_csv(ARQUIVO_ENTRADA, encoding='utf-8')
+        df = pd.read_csv(INPUT_FILE, encoding='utf-8')
     except:
-        df = pd.read_csv(ARQUIVO_ENTRADA, encoding='latin1')
+        df = pd.read_csv(INPUT_FILE, encoding='latin1')
 
-    print("2. Selecionando e renomeando colunas...")
+    print("2. Selecting and renaming columns...")
 
-    # Mapeamento das colunas do WiGLE para o nosso formato
-    # Formato WiGLE -> Nosso Formato
-    colunas_desejadas = {
+    # Mapping WiGLE columns to our format
+    # WiGLE Format -> Our Format
+    desired_columns = {
         'SSID': 'SSID',
-        'MAC': 'Adr MAC (BSSID)',
+        'MAC': 'Adr MAC (BSSID)',       
         'CurrentLatitude': 'Latitude',
         'CurrentLongitude': 'Longitude'
     }
 
-    # Verifica se as colunas existem antes de processar
-    colunas_existentes = [c for c in colunas_desejadas.keys() if c in df.columns]
+    # Checks if columns exist before processing
+    existing_columns = [c for c in desired_columns.keys() if c in df.columns]
     
-    if len(colunas_existentes) < 4:
-        print(f"⚠️ Aviso: Algumas colunas não foram encontradas. Colunas no arquivo: {list(df.columns)}")
-        # Tenta continuar mesmo assim
+    if len(existing_columns) < 4:
+        print(f"⚠️ Warning: Some columns were not found. Columns in file: {list(df.columns)}")
+        # Tries to continue regardless
     
-    # Filtra apenas as colunas que queremos e renomeia
-    df_final = df[colunas_existentes].rename(columns=colunas_desejadas)
+    # Filter only the columns we want and rename them
+    df_final = df[existing_columns].rename(columns=desired_columns)
 
-    print("3. Normalizando dados...")
+    print("3. Normalizing data...")
 
-    # 1. Converter MAC para MAIÚSCULO (ex: aa:bb -> AA:BB)
+    # 1. Convert MAC to UPPERCASE (e.g., aa:bb -> AA:BB)
     if 'Adr MAC (BSSID)' in df_final.columns:
         df_final['Adr MAC (BSSID)'] = df_final['Adr MAC (BSSID)'].astype(str).str.upper().str.strip()
 
-    # 2. Preencher SSIDs vazios com "Hidden" ou "Desconhecido" (Opcional, mas ajuda visualmente)
+    # 2. Fill empty SSIDs with "Hidden" or "Unknown" (Optional, helps visually)
     if 'SSID' in df_final.columns:
         df_final['SSID'] = df_final['SSID'].fillna('Hidden')
 
-    # 3. Garantir que Latitude e Longitude são números válidos
-    # O Pandas geralmente já faz isso, mas removemos linhas sem coordenada por segurança
+    # 3. Ensure Latitude and Longitude are valid numbers
+    # Pandas usually does this, but we remove lines without coordinates for safety
     df_final = df_final.dropna(subset=['Latitude', 'Longitude'])
 
     
-    # Salva no formato padrão: Vírgula, UTF-8, Sem índice
-    df_final.to_csv(ARQUIVO_SAIDA, index=False, sep=',', encoding='utf-8')
+    # Saves in standard format: Comma, UTF-8, No index
+    df_final.to_csv(OUTPUT_FILE, index=False, sep=',', encoding='utf-8')
 
-    print("\n✅ Sucesso! O arquivo foi gerado formatado corretamente.")
+    print("\n✅ Success! The file was generated and formatted correctly.")
 
 
 if __name__ == "__main__":
