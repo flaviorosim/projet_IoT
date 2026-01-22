@@ -30,14 +30,13 @@ function loadDB() {
     fs.createReadStream(DB_FILE)
         .pipe(csv())
         .on('data', (row) => {
-            // Tries to get the MAC column. If the name differs, we adjust.
-            // The code below searches for the column containing "MAC" in the name
+
             const colMac = Object.keys(row).find(k => k.includes('MAC') || k.includes('BSSID'));
             const colLat = Object.keys(row).find(k => k.includes('Lat'));
             const colLon = Object.keys(row).find(k => k.includes('Lon'));
 
             if (colMac && row[colMac]) {
-                // NORMALIZATION: Force uppercase and remove spaces
+                
                 const mac = row[colMac].trim().toUpperCase();
                 
                 wifi_db[mac] = {
@@ -72,9 +71,9 @@ function calculatePosition(scanned_aps) {
         const known_ap = wifi_db[macSearch];
         
         if (known_ap) {
-            // Convert RSSI to Distance
+            // Convert RSSI to dist
             const dist = Math.pow(10, (RSSI_AT_1M - ap.rssi) / (10 * N_EXPONENT));
-            // Weight = Inverse of distance
+            // Weight = Inverse of dist
             const weight = 1 / (dist + 0.1);
 
             lat_sum += known_ap.lat * weight;
@@ -83,8 +82,7 @@ function calculatePosition(scanned_aps) {
             aps_used++;
             console.log(`   -> USED IN CALC: ${macSearch} (${ap.rssi}dBm) ~ ${dist.toFixed(1)}m`);
         } else {
-            // Optional log to see what failed inside the calculation
-            // console.log(`   Ignored in calc: ${macSearch} (Not found in DB)`);
+
         }
     });
 
@@ -112,7 +110,7 @@ client.on('connect', () => {
 client.on('message', (topic, message) => {
     try {
         const payload = JSON.parse(message.toString());
-        // Gets the decoded payload (from your JS formatter in TTN)
+        
         const aps = payload.uplink_message.decoded_payload.wifi_access_points;
         
         if (aps && aps.length > 0) {
@@ -136,7 +134,7 @@ client.on('message', (topic, message) => {
                 
                 // Save to history
                 history.push(position);
-                // Persist to file (optional, to avoid loss on restart)
+                
                 fs.writeFileSync(HISTORY_FILE, JSON.stringify(history));
             } else {
                 console.log("⚠️ No known APs found in this scan.");
@@ -148,7 +146,7 @@ client.on('message', (topic, message) => {
 });
 
 // --- FRONTEND API ---
-app.get('/api/trajectory', (req, res) => { // Changed endpoint to English
+app.get('/api/trajectory', (req, res) => {
     res.json(history);
 });
 
